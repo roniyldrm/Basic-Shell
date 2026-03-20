@@ -1,5 +1,5 @@
-#ifndef SHELL
-#define SHELL
+#ifndef headers
+#define headers
 
     #include <iostream>
     #include <string>
@@ -7,6 +7,10 @@
     #include <vector>
     #include <memory>
     #include <filesystem>
+    #include <map>
+    #include <functional>
+    #include <variant>
+    #include <optional>
 
     #include <unistd.h>
     #include <sys/wait.h>
