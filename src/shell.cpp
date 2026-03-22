@@ -1,5 +1,24 @@
 #include "shell.hpp"
-#include "built_in.hpp"
+#include "builtins.hpp"
+
+
+
+void Shell::run() const{
+ while (true) {
+        std::cout << "myshell> ";
+
+        std::string input;
+        if (!std::getline(std::cin, input))
+            break;
+
+    /*
+        auto tokens = lexer.tokenize(input);
+        auto ast = parser.parse(tokens);
+        executor.execute(ast);
+    */
+
+ }
+}
 
 
 void Shell::registerBuiltins(){
