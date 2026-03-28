@@ -1,9 +1,12 @@
 #include <string>
+#include <string_view>
 #include <vector>
+#include <memory>
 #include <optional>
 
 enum class TokenType{
     WORD,
+    NUMBER,
     PIPE,
     REDIRECT_IN,
     REDIRECT_OUT,
@@ -21,13 +24,14 @@ struct Token{
 
 class Lexer{
 
-    std::string text;
-    std::size_t pos = 0;
+    std::string_view text;
     
 public:
+    std::size_t pos = 0;
+    
     Lexer(const std::string& text);
 
     [[nodiscard]] 
-    std::optional<std::vector<std::string>> tokenize() const;
+    std::optional<std::vector<Token>> tokenize();
 
 };
