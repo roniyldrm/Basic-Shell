@@ -4,7 +4,8 @@ struct ASTNode{
     std::string value;
     ASTNode* left;
     ASTNode* right;
-
+    
+    ASTNode(const std::string& s = "");
     ASTNode(ASTNode* l, ASTNode* r, const std::string& s = "");
 };
 
@@ -13,7 +14,7 @@ private:
     std::vector<Token> tokens;
     std::size_t pos = 0;
 
-    constexpr Token current() const;
+    constexpr Token& current();
     constexpr void pass();
 
 public:
@@ -24,4 +25,6 @@ public:
 
     Parser& operator=(const Parser&) = delete;
     Parser& operator=(Parser&&) = delete;
+
+    ASTNode* parse();
 };

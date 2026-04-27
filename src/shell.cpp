@@ -1,43 +1,59 @@
 #include "shell.hpp"
 #include "builtins.hpp"
 
+Shell::Shell() {
+    registerBuiltins();
+}
 
+Shell::~Shell() = default;
 
-void Shell::run() const{
- while (true) {
+void Shell::run() {
+    while (true) {
         std::cout << "myshell> ";
-
         std::string input;
         if (!std::getline(std::cin, input))
             break;
 
-    /*
-        auto tokens = lexer.tokenize(input);
-        auto ast = parser.parse(tokens);
-        executor.execute(ast);
-    */
+        const auto words = tokenize(input);
+        if (!words)
+            continue;
 
- }
-}
-
-
-void Shell::registerBuiltins(){
-    builtins["test"] = test;
-}
-
-void Shell::executeExternal(const std::vector<char *>& tokens){
-    Process p{fork()};
-
-    if(p() > 0){
-        execvp(tokens[0], tokens.data());
-
-        perror("exec failed");
-        exit(1);
+        // Step 1: all commands go through the external path; builtin dispatch comes next.
+        executeExternal(*words);
     }
 }
 
-std::optional<std::vector<std::string>> Shell::tokenize(const std::string& line){
-    
+void Shell::registerBuiltins() {
+    builtins["test"] = [](const std::vector<std::string>& t) -> builtInResult {
+        return test(t);
+    };
+}
+
+void Shell::executeExternal(const std::vector<std::string>& args) {
+    if (args.empty())
+        return;
+
+    std::vector<char*> argv;
+    argv.reserve(args.size() + 1);
+    for (const auto& s : args)
+        argv.push_back(const_cast<char*>(s.c_str()));
+    argv.push_back(nullptr);
+
+    const pid_t child = fork();
+    if (child < 0) {
+        perror("fork");
+        return;
+    }
+    if (child == 0) {
+        execvp(argv[0], argv.data());
+        perror("exec failed");
+        _exit(127);
+    }
+
+    Process waiter{child};
+}
+
+std::optional<std::vector<std::string>> Shell::tokenize(const std::string& line) {
     std::istringstream iss(line);
     std::vector<std::string> tokens;
     std::string token;
@@ -45,8 +61,9 @@ std::optional<std::vector<std::string>> Shell::tokenize(const std::string& line)
     while (iss >> token)
         tokens.push_back(token);
 
-    
-    return tokens.empty() ? std::optional<std::vector<std::string>>{tokens} : std::optional<std::vector<std::string>>{};
+    if (tokens.empty())
+        return std::nullopt;
+    return tokens;
 }
 
 
