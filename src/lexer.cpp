@@ -1,47 +1,59 @@
-#include "include/lexer.hpp"
+#include "lexer.hpp"
+#include <cctype>
 
-Lexer::Lexer(const std::string& text) : text(text){};
+Lexer::Lexer(const std::string& text) : text(text){}
 
 std::optional<std::vector<Token>> Lexer::tokenize(){ 
     std::vector<Token> tokens;
-    auto&& t{this->text};
+    const auto t = this->text;
     
-    if(t.empty()) 
+    if(t.empty())
         return {};
 
     while(pos < t.length()){
-        auto&& c{t[pos]};
-        
+        const unsigned char c = static_cast<unsigned char>(t[pos]);
 
         if(std::isspace(c)){
             pos++;
+            continue;
         }
-        
-        if(std::isalpha(c) && (c != '\"' || c != '\'')){
+
+        if(std::isalpha(c)){
             std::string s;
-            while(!std::isspace(t[pos]) && pos < t.length()){
+            while(pos < t.length() && !std::isspace(static_cast<unsigned char>(t[pos]))){
                 s += t[pos];
                 pos++;
             }
             tokens.push_back({TokenType::WORD, std::move(s)});
-        }else if(c == '\"' || c == '\'' && pos < t.length()){
+            continue;
+        }
+
+        if(c == '\"' || c == '\''){
+            const char quote = static_cast<char>(c);
             std::string s;
             pos++;
-            while(!(t[pos] == '\"' || t[pos] == '\'') && pos < t.length()){
+            while(pos < t.length() && t[pos] != quote){
                 s += t[pos];
                 pos++;
             }
+            if(pos < t.length() && t[pos] == quote)
+                pos++;
             tokens.push_back({TokenType::WORD, std::move(s)});
-        }else if(std::isdigit(c)){
+            continue;
+        }
+
+        if(std::isdigit(c)){
             std::string s;
-            while(!std::isdigit(t[pos]) && pos < t.length()){
+            while(pos < t.length() && std::isdigit(static_cast<unsigned char>(t[pos]))){
                 s += t[pos];
                 pos++;
             }
             tokens.push_back({TokenType::NUMBER, std::move(s)});
+            continue;
         }
 
-        // ...
-        return {tokens};
+        // Unhandled character: skip (pipes / redirects not implemented yet)
+        pos++;
     }
+    return tokens;
 }

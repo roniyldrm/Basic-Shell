@@ -2,10 +2,8 @@
 
 int main(int argc, char** argv) {
     (void)argc;
-    (void)argv; 
+    (void)argv;
 
     Shell shell;
-    shell.run();
-
-    
+    return shell.run();
 }

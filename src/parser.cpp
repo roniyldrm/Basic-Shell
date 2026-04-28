@@ -1,16 +1,23 @@
-#include "include/parser.hpp"
+#include "parser.hpp"
 
-ASTNode::ASTNode(const std::string& s = "") : left(nullptr), right(nullptr), value(std::move(s)){}
+ASTNode::ASTNode(std::string s) : value(std::move(s)), left(nullptr), right(nullptr) {}
 
-ASTNode::ASTNode(ASTNode* l, ASTNode* r, const std::string& s = "") : left(l), right(r), value(std::move(s)){}
+ASTNode::ASTNode(std::unique_ptr<ASTNode> l, std::unique_ptr<ASTNode> r, std::string s)
+    : value(std::move(s)), left(std::move(l)), right(std::move(r)) {}
 
-constexpr void Parser::pass() { this->pos++;}
+void Parser::pass() {
+    ++pos;
+}
 
-constexpr Token& Parser::current() { return tokens[pos];}
+Token& Parser::current() {
+    return tokens[pos];
+}
 
-Parser::Parser(const std::vector<Token>& t) : tokens(std::move(t)){}
+Parser::Parser(std::vector<Token> t) : tokens(std::move(t)) {}
 
-ASTNode* Parser::parse(){
-
-    
+std::unique_ptr<ASTNode> Parser::parse() {
+    if (tokens.empty() || pos >= tokens.size())
+        return nullptr;
+    // Stub for future pipeline / redirect AST; no piping yet.
+    return std::make_unique<ASTNode>(tokens[pos].value);
 }
