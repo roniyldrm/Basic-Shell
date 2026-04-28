@@ -17,7 +17,7 @@ void ls_print_dir(const fs::path& p) {
         std::cout << name << '\n';
 }
 
-} // namespace
+}
 
 int builtin_cd(const std::vector<std::string>& args) {
     std::string path;

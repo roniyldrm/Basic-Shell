@@ -1,23 +1,49 @@
 #include "parser.hpp"
-
-ASTNode::ASTNode(std::string s) : value(std::move(s)), left(nullptr), right(nullptr) {}
-
-ASTNode::ASTNode(std::unique_ptr<ASTNode> l, std::unique_ptr<ASTNode> r, std::string s)
-    : value(std::move(s)), left(std::move(l)), right(std::move(r)) {}
-
-void Parser::pass() {
-    ++pos;
-}
-
-Token& Parser::current() {
-    return tokens[pos];
-}
+#include <iostream>
 
 Parser::Parser(std::vector<Token> t) : tokens(std::move(t)) {}
 
-std::unique_ptr<ASTNode> Parser::parse() {
-    if (tokens.empty() || pos >= tokens.size())
-        return nullptr;
-    // Stub for future pipeline / redirect AST; no piping yet.
-    return std::make_unique<ASTNode>(tokens[pos].value);
+std::optional<ParsedPipeline> Parser::parse() {
+    ParsedPipeline out;
+    std::vector<std::string> cur;
+    bool need_command_after_pipe = false;
+
+    const auto flush = [&] {
+        if (!cur.empty())
+            out.stages.push_back(std::move(cur));
+        cur.clear();
+    };
+
+    for (; pos < tokens.size(); ++pos) {
+        const Token& tk = tokens[pos];
+        switch (tk.type) {
+        case TokenType::WORD:
+        case TokenType::NUMBER:
+            need_command_after_pipe = false;
+            cur.push_back(tk.value);
+            break;
+        case TokenType::PIPE:
+            if (cur.empty()) {
+                std::cerr << "myshell: syntax error near unexpected token `|'\n";
+                return std::nullopt;
+            }
+            flush();
+            need_command_after_pipe = true;
+            break;
+        default:
+            std::cerr << "myshell: parse error (token `" << tk.value << "')\n";
+            return std::nullopt;
+        }
+    }
+
+    flush();
+
+    if (need_command_after_pipe) {
+        std::cerr << "myshell: syntax error: incomplete pipe\n";
+        return std::nullopt;
+    }
+
+    if (out.stages.empty())
+        return std::nullopt;
+    return out;
 }

@@ -12,6 +12,7 @@ add_executable(myshell
     src/builtins.cpp
     src/parser.cpp
     src/lexer.cpp
+    src/executor.cpp
 )
 
 target_include_directories(myshell PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)

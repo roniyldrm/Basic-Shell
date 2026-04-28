@@ -8,7 +8,7 @@ std::optional<std::vector<Token>> Lexer::tokenize(){
     const auto t = this->text;
     
     if(t.empty())
-        return {};
+        return std::nullopt;
 
     while(pos < t.length()){
         const unsigned char c = static_cast<unsigned char>(t[pos]);
@@ -18,13 +18,9 @@ std::optional<std::vector<Token>> Lexer::tokenize(){
             continue;
         }
 
-        if(std::isalpha(c)){
-            std::string s;
-            while(pos < t.length() && !std::isspace(static_cast<unsigned char>(t[pos]))){
-                s += t[pos];
-                pos++;
-            }
-            tokens.push_back({TokenType::WORD, std::move(s)});
+        if(c == '|'){
+            tokens.push_back({TokenType::PIPE, "|"});
+            pos++;
             continue;
         }
 
@@ -52,8 +48,18 @@ std::optional<std::vector<Token>> Lexer::tokenize(){
             continue;
         }
 
-        // Unhandled character: skip (pipes / redirects not implemented yet)
-        pos++;
+        std::string s;
+        while(pos < t.length() && !std::isspace(static_cast<unsigned char>(t[pos]))){
+            const char ch = t[pos];
+            if (ch == '|' || ch == '\'' || ch == '\"')
+                break;
+            s += ch;
+            pos++;
+        }
+        tokens.push_back({TokenType::WORD, std::move(s)});
     }
+
+    if (tokens.empty())
+        return std::nullopt;
     return tokens;
 }

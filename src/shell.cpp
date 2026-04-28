@@ -1,6 +1,8 @@
 #include "shell.hpp"
 #include "builtins.hpp"
-#include <cstdlib>
+#include "executor.hpp"
+#include "lexer.hpp"
+#include "parser.hpp"
 #include <sys/wait.h>
 
 Shell::Shell() {
@@ -41,6 +43,8 @@ int Shell::builtinExit(const std::vector<std::string>& args) {
 }
 
 int Shell::run() {
+    Executor executor;
+
     while (!exit_requested_) {
         std::cout << "myshell> ";
 
@@ -48,18 +52,20 @@ int Shell::run() {
         if (!std::getline(std::cin, input))
             break;
 
-        const auto words = tokenize(input);
-        if (!words)
+        Lexer lexer(input);
+        const auto token_result = lexer.tokenize();
+        if (!token_result)
             continue;
 
-        const std::string& cmd = words->front();
-        auto it = builtins.find(cmd);
-        if (it != builtins.end())
-            last_status_ = it->second(*words);
-        else
-            executeExternal(*words);
+        Parser parser(std::move(*token_result));
+        const auto parsed = parser.parse();
+        if (!parsed) {
+            last_status_ = 1;
+            continue;
+        }
 
-        // Let exit builtin terminate the shell after this iteration without double-running.
+        last_status_ = executor.execute(*this, *parsed);
+
         if (exit_requested_)
             break;
     }
@@ -69,17 +75,16 @@ int Shell::run() {
     return last_status_;
 }
 
-std::optional<std::vector<std::string>> Shell::tokenize(const std::string& line) {
-    std::istringstream iss(line);
-    std::vector<std::string> tokens;
-    std::string token;
+void Shell::runBuiltinOrExternal(const std::vector<std::string>& args) {
+    if (args.empty())
+        return;
 
-    while (iss >> token)
-        tokens.push_back(token);
-
-    if (tokens.empty())
-        return std::nullopt;
-    return tokens;
+    const std::string& cmd = args.front();
+    const auto it = builtins.find(cmd);
+    if (it != builtins.end())
+        last_status_ = it->second(args);
+    else
+        executeExternal(args);
 }
 
 namespace {
@@ -98,7 +103,7 @@ int wait_child_status(pid_t child) {
     return 1;
 }
 
-} // namespace
+}
 
 void Shell::executeExternal(const std::vector<std::string>& args) {
     if (args.empty())
