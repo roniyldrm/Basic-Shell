@@ -1,6 +1,6 @@
 # BasicShell
 
-A small POSIX-style shell loop for Unix-like systems: read a line, turn it into tokens, parse a simple pipeline structure, then run built-ins or `execvp` for everything else.
+A POSIX-style shell loop for Unix-like systems: read a line, turn it into tokens, parse a simple pipeline structure, then run built-ins or `execvp` for everything else.
 
 ## What you need
 
